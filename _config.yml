@@ -50,6 +50,7 @@ markdown: kramdown
 exclude:
 - node_modules
 - gulpfile.js
+- [vendor]
 # social:
 # - name: Facebook
 #   link: https://www.facebook.com/Bartlom%C3%A9-Soccer-Academy-1699026550336895/
