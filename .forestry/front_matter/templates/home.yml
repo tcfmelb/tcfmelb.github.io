@@ -1,4 +1,10 @@
 ---
 label: Home
 hide_body: false
-fields: []
+fields:
+- name: hero_text_main
+  type: text
+  config:
+    required: false
+  label: Hero Text Main
+  description: The big text on the site's main page
