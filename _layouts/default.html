@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ page.title }}</title>
+  <meta name="description" content="{{ page.description }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="keywords" content="tamil, christian, church, fellowship, victoria, melbourne, australia, sunshine, st, albans, melton, bacchus, marsh, worship, praise, service, time, ministry, ministries, times, pastor, vinojit, appathurai, youth, kids, children, prayer, fasting, {{ page.keywords }}">
+
+  <link rel="shortcut icon" href="images/Logo.png">
+  <link rel="apple-touch-icon" href="images/Logo.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="tachyons.css">
+
+  <meta name="theme-color" content="#111111">
+</head>
+
+<body>
+
+  {% include nav.html %}
+
+  {{ content }}
+
+  {% include contact.html %}
+  {% include footer.html %}
+
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="js/vendor/jquery-3.4.1.min.js"><\/script>')</script>
+  <script src="main.js" charset="utf-8"></script>
+  <script>
+    window.ga = function () { ga.q.push(arguments) }; ga.q = []; ga.l = +new Date;
+    ga('create', 'UA-XXXXX-Y', 'auto'); ga('set','transport','beacon'); ga('send', 'pageview')
+  </script>
+  <script src="https://www.google-analytics.com/analytics.js" async></script>
+</body>
+</html>
