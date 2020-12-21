@@ -1,0 +1,15 @@
+.main-wrapper {
+  background: url(img/background.jpg) center/cover fixed;
+}
+
+.f--cedarville {
+  font-family: 'Cedarville Cursive', cursive;
+}
+
+.f--cinzel {
+  font-family: 'Cinzel Decorative', cursive;
+}
+
+.f--uncial {
+  font-family: 'Uncial Antiqua', cursive;
+}
