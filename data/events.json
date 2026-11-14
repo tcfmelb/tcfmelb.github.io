@@ -1,0 +1,232 @@
+[
+  {
+    "title": "Sunday service",
+    "date": "2026-11-08",
+    "time": "9:30am",
+    "campuses": [
+      "melton"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-08",
+    "time": "10am",
+    "campuses": [
+      "mernda"
+    ],
+    "description": "with Ps Jenistan (Guest Speaker – France)",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-08",
+    "time": "4pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-08",
+    "time": "4:30pm",
+    "campuses": [
+      "tarneit"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-08",
+    "time": "5pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-15",
+    "time": "9:30am",
+    "campuses": [
+      "melton"
+    ],
+    "description": "",
+    "cancelled": true
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-15",
+    "time": "10am",
+    "campuses": [
+      "mernda"
+    ],
+    "description": "with Evg. Stephen (Guest Speaker – India)",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-15",
+    "time": "4pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "description": "with Evg. Stephen (Guest Speaker – India)",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-15",
+    "time": "4:30pm",
+    "campuses": [
+      "tarneit"
+    ],
+    "description": "",
+    "cancelled": true
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-15",
+    "time": "5pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-22",
+    "time": "9:30am",
+    "campuses": [
+      "melton"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-22",
+    "time": "10am",
+    "campuses": [
+      "mernda"
+    ],
+    "description": "with Ps Pitchaiah (Guest Speaker – India)",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-22",
+    "time": "4pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "description": "with Ps Pitchaiah (Guest Speaker – India)",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-22",
+    "time": "4:30pm",
+    "campuses": [
+      "tarneit"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-22",
+    "time": "5pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "description": "",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-29",
+    "time": "9:30am",
+    "campuses": [
+      "melton"
+    ],
+    "description": "Conducted by Youth / Sunday School Seniors",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-29",
+    "time": "10am",
+    "campuses": [
+      "mernda"
+    ],
+    "description": "Conducted by Youth / Sunday School Seniors",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-29",
+    "time": "4pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "description": "Conducted by Youth / Sunday School Seniors",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-29",
+    "time": "4:30pm",
+    "campuses": [
+      "tarneit"
+    ],
+    "description": "Conducted by Youth / Sunday School Seniors",
+    "cancelled": false
+  },
+  {
+    "title": "Sunday service",
+    "date": "2026-11-29",
+    "time": "5pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "description": "Conducted by Youth / Sunday School Seniors",
+    "cancelled": false
+  },
+  {
+    "title": "Fellowship Groups",
+    "date": "2026-11-21",
+    "time": "4:30pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "description": "Youth, Men's and Women's Meetings",
+    "cancelled": false
+  },
+  {
+    "title": "Fasting & Prayer",
+    "date": "2026-10-31",
+    "time": "9am",
+    "campuses": [
+      "sunshine"
+    ],
+    "description": "with Bro Wesley Maxwell (Guest Speaker from India)",
+    "cancelled": false
+  },
+  {
+    "title": "An Evening of Worship and Word",
+    "date": "2026-10-29",
+    "time": "from 6:30pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "description": "With Bro Wesley Maxwell (Gospel Singer/Evangelist from India)",
+    "cancelled": false
+  }
+]

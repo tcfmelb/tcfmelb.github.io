@@ -1,0 +1,112 @@
+# Pages CMS configuration — https://pagescms.org/docs/configuration/
+# Lets church volunteers edit events and the announcement bar without touching code.
+# Changes are saved straight to this GitHub repository; the website updates a minute or two later.
+
+settings:
+  commit:
+    identity: user # save each edit under the editor's own GitHub name and email
+
+media:
+  input: images
+  output: /images
+
+content:
+  - name: events
+    label: Events
+    description: >-
+      Everything shown on the Events page, the home page and each campus page.
+      Add one entry per campus for each Sunday service (for example, five entries for one Sunday).
+      Entries dated on a Sunday appear under "Sunday services"; all other dates appear under "Gatherings".
+      "Past" and "Next" labels are added automatically from the date, so old events can be left in place.
+    type: file
+    path: data/events.json
+    format: json
+    list: true
+    fields:
+      - name: title
+        label: Event name
+        type: string
+        required: true
+        description: >-
+          For example "Sunday service", "Fellowship Groups" or "Fasting & Prayer".
+          For regular Sunday services use exactly "Sunday service" (the date becomes the heading).
+          Any other name on a Sunday is shown next to the campus, e.g. "Christmas service".
+
+      - name: date
+        label: Date
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+        description: Pick the day the event happens.
+
+      - name: time
+        label: Time
+        type: string
+        required: true
+        description: >-
+          Write it the way it should appear, e.g. "9:30am", "4pm" or "from 6:30pm".
+
+      - name: campuses
+        label: Campus
+        type: select
+        required: true
+        description: >-
+          Where the event is held. Pick one or more campuses, or choose "All campuses".
+          The event only appears on the pages of the campuses you pick.
+        options:
+          multiple: true
+          min: 1
+          placeholder: Choose a campus
+          values:
+            - name: all
+              label: All campuses
+            - name: melton
+              label: Melton
+            - name: mernda
+              label: Mernda
+            - name: sunshine
+              label: Sunshine
+            - name: tarneit
+              label: Tarneit
+            - name: noble-park
+              label: Noble Park
+
+      - name: description
+        label: Details (optional)
+        type: string
+        description: >-
+          A short line shown under the event, e.g. "with Ps Pitchaiah (Guest Speaker – India)".
+          Start with "with" to show it as a highlighted speaker line. Leave empty if not needed.
+
+      - name: cancelled
+        label: Cancelled
+        type: boolean
+        default: false
+        description: Tick this if the event will not go ahead. It stays listed, crossed out and marked "Cancelled".
+
+  - name: announcement
+    label: Announcement bar
+    description: >-
+      The coloured strip at the very top of every page, for livestreams, special notices or registrations.
+    type: file
+    path: data/announcement.json
+    format: json
+    fields:
+      - name: enabled
+        label: Show the announcement bar
+        type: boolean
+        default: false
+        description: Untick to hide the bar on every page without deleting the message.
+
+      - name: text
+        label: Message
+        type: string
+        description: Keep it to one short sentence so it fits on a phone screen.
+
+      - name: link
+        label: Link (optional)
+        type: string
+        description: >-
+          A full web address starting with https:// — the whole message becomes clickable.
+          Leave empty for a message with no link.
