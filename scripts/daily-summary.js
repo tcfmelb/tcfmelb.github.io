@@ -385,13 +385,30 @@ function buildEmail({ report, visitors, health, now, env }) {
 }
 
 /* ---------- sending ---------- */
-async function send(mail, env) {
+// NOTIFY_EMAIL: one or more plain addresses, separated by commas or semicolons, e.g.
+// "media@tcfmelbourne.org; pastor@example.org, someone@example.org". Spaces and empty items are ignored.
+const EMAIL_RE = /^[^\s@<>()[\],;:"]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/;
+function parseRecipients(value) {
+  const list = String(value == null ? '' : value).split(/[,;]/).map((x) => x.trim()).filter(Boolean);
+  // Report positions, not the addresses: the Actions log may be public
+  const bad = list.map((x, i) => (EMAIL_RE.test(x) ? 0 : i + 1)).filter(Boolean);
+  if (!list.length) throw new Error('NOTIFY_EMAIL has no email addresses.');
+  if (bad.length) throw new Error(`NOTIFY_EMAIL: ${bad.length === 1 ? 'address' : 'addresses'} ${bad.join(', ')} of ${list.length} ${bad.length === 1 ? 'is' : 'are'} not a valid email address. Use plain addresses separated by commas or semicolons.`);
+  return list;
+}
+// Up to three recipients all go in "To". With more, only the first is visible in "To" and the rest are BCC.
+function recipientFields(list) {
+  return list.length > 3 ? { to: list[0], bcc: list.slice(1) } : { to: list.slice() };
+}
+
+// createTransport can be replaced in tests (no real email is sent)
+async function send(mail, env, createTransport) {
   const need = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'NOTIFY_EMAIL', 'SMTP_FROM'];
   const missing = need.filter((k) => !env[k]);
   if (missing.length) throw new Error(`Email is not set up. Missing: ${missing.join(', ')}`); // names only, never values
-  const nodemailer = require('nodemailer');
+  const recipients = parseRecipients(env.NOTIFY_EMAIL); // checked before connecting to the mail server
   const port = Number(env.SMTP_PORT);
-  const transport = nodemailer.createTransport({
+  const transport = (createTransport || require('nodemailer').createTransport)({
     host: env.SMTP_HOST,
     port,
     secure: port === 465,  // 465 = TLS from the start; 587 = STARTTLS (required below)
@@ -399,12 +416,9 @@ async function send(mail, env) {
     auth: { user: env.SMTP_USER, pass: env.SMTP_PASSWORD },
     logger: false, debug: false
   });
-  await transport.sendMail({
-    from: env.SMTP_FROM,
-    to: env.NOTIFY_EMAIL.split(',').map((x) => x.trim()).filter(Boolean),
-    subject: mail.subject,
-    text: mail.text
-  });
+  // One email for everyone
+  await transport.sendMail(Object.assign({ from: env.SMTP_FROM }, recipientFields(recipients), { subject: mail.subject, text: mail.text }));
+  return recipients.length;
 }
 
 async function main() {
@@ -425,7 +439,7 @@ async function main() {
   const full = `Subject: ${mail.subject}\n\n${mail.text}`;
   if (outFile) { fs.writeFileSync(outFile, full); console.log(`Email saved to ${outFile} (not sent).`); }
   else if (dry) console.log(full);
-  else { await send(mail, env); console.log(`Email sent: ${mail.subject}`); }
+  else { const n = await send(mail, env); console.log(`Email sent to ${n} ${n === 1 ? 'address' : 'addresses'}: ${mail.subject}`); }
   if (mail.problems.length) {
     console.error(`${mail.problems.length} problem(s) found, so this run is marked as failed:`);
     mail.problems.forEach((p) => console.error('- ' + p));
@@ -441,4 +455,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { buildEmail, getVisitors, getHealth, melbourneToday, melMidnight, minutes, config };
+module.exports = { buildEmail, getVisitors, getHealth, melbourneToday, melMidnight, minutes, config, parseRecipients, recipientFields, send };

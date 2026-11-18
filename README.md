@@ -60,7 +60,7 @@ On the **Variables** tab, click **New repository variable** for each:
 |---|---|
 | `SUPABASE_URL` | `https://ahrwrjxlsaprqbbtjvzk.supabase.co` |
 | `SUPABASE_ANON_KEY` | the publishable key, `sb_publishable_…`. Never the secret or service-role key; the script refuses those. |
-| `NOTIFY_EMAIL` | who gets the summary. Separate several addresses with commas. |
+| `NOTIFY_EMAIL` | who gets the summary: one address, or several separated by commas or semicolons, e.g. `media@tcfmelbourne.org; someone@example.org`. Spaces and empty items are ignored; each address is checked, and a wrong one stops the run before anything is sent (the log names its position, not the address). One email goes to everyone. Up to three addresses are all shown in "To"; with more than three, only the first is in "To" and the rest get it as BCC. |
 | `SMTP_FROM` | the sender, e.g. `TCF Website <admin@tcfmelbourne.org>`. Must be the mailbox you log in with (or an alias of it). |
 | `GOATCOUNTER_CODE` | `tcfmelbourne` |
 | `SITE_URL` | optional. Only set it to check a different address, e.g. a test copy of the site. Default `https://tcfmelbourne.org`. |

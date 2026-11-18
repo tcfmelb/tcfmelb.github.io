@@ -8,7 +8,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const { diffEvents, diffCampuses, diffGallery, toEventBackup, toCampusBackup, toGalleryBackup, assertPublicKey } = require('./export-events');
-const { buildEmail, getVisitors, getHealth, melbourneToday, melMidnight, minutes, config } = require('./daily-summary');
+const { buildEmail, getVisitors, getHealth, melbourneToday, melMidnight, minutes, config, parseRecipients, recipientFields, send } = require('./daily-summary');
 
 let passed = 0;
 const tests = [];
@@ -279,6 +279,39 @@ test('Supabase read failed -> PROBLEM alert with the status code, health and vis
   assert.ok(mail.text.includes('The Supabase read failed (events): HTTP 503.'));
   assert.ok(mail.text.includes('VISITORS YESTERDAY') && mail.text.includes('HEALTH'));
   assert.ok(buildEmail({ report: null, visitors, health, now: NOW, env: ENV }).text.includes('no response (HTTP status unknown)'));
+});
+test('NOTIFY_EMAIL: commas or semicolons, spaces and empty items, each address checked', () => {
+  assert.deepStrictEqual(parseRecipients('media@tcfmelbourne.org'), ['media@tcfmelbourne.org']);
+  assert.deepStrictEqual(parseRecipients(' a@example.org ;b@example.org,, c.d+tag@mail.example.com.au ; ;'),
+    ['a@example.org', 'b@example.org', 'c.d+tag@mail.example.com.au']);
+  for (const bad of ['not-an-email', 'a@example', 'a b@example.org', 'Name <a@example.org>', 'a@@example.org', 'a@-x.org', 'a@x.c']) {
+    assert.throws(() => parseRecipients(`ok@example.org, ${bad}`), /NOTIFY_EMAIL: address 2 of 2 is not a valid email address/, bad);
+  }
+  assert.throws(() => parseRecipients(' ; , '), /NOTIFY_EMAIL has no email addresses/);
+  assert.throws(() => parseRecipients('x@, y@example.org; z'), /addresses 1, 3 of 3 are not/);
+  // The error names positions only, never the addresses (the Actions log may be public)
+  assert.throws(() => parseRecipients('secret.person@example'), (e) => !e.message.includes('secret.person'));
+});
+test('NOTIFY_EMAIL: up to three in To; more than three: first in To, the rest in BCC; one email', async () => {
+  assert.deepStrictEqual(recipientFields(['a@x.org']), { to: ['a@x.org'] });
+  assert.deepStrictEqual(recipientFields(['a@x.org', 'b@x.org', 'c@x.org']), { to: ['a@x.org', 'b@x.org', 'c@x.org'] });
+  assert.deepStrictEqual(recipientFields(['a@x.org', 'b@x.org', 'c@x.org', 'd@x.org']), { to: 'a@x.org', bcc: ['b@x.org', 'c@x.org', 'd@x.org'] });
+  // send() with a fake mail server: one sendMail call, nothing really sent
+  const env = { SMTP_HOST: 'smtp.example.org', SMTP_PORT: '587', SMTP_USER: 'u', SMTP_PASSWORD: 'not-real', SMTP_FROM: 'TCF Website <web@example.org>',
+    NOTIFY_EMAIL: 'a@x.org; b@x.org, c@x.org;d@x.org , e@x.org' };
+  const sent = []; let opts = null;
+  const fake = (o) => { opts = o; return { sendMail: async (m) => { sent.push(m); } }; };
+  assert.strictEqual(await send({ subject: 'S', text: 'T' }, env, fake), 5);
+  assert.strictEqual(sent.length, 1, 'one email');
+  assert.deepStrictEqual([sent[0].to, sent[0].bcc], ['a@x.org', ['b@x.org', 'c@x.org', 'd@x.org', 'e@x.org']]);
+  assert.deepStrictEqual([sent[0].from, sent[0].subject, sent[0].text, opts.requireTLS], ['TCF Website <web@example.org>', 'S', 'T', true]);
+  sent.length = 0;
+  await send({ subject: 'S', text: 'T' }, Object.assign({}, env, { NOTIFY_EMAIL: 'a@x.org;b@x.org' }), fake);
+  assert.deepStrictEqual([sent[0].to, 'bcc' in sent[0]], [['a@x.org', 'b@x.org'], false]);
+  // An invalid address stops the run before connecting to the mail server
+  let connected = false;
+  await assert.rejects(send({ subject: 'S', text: 'T' }, Object.assign({}, env, { NOTIFY_EMAIL: 'a@x.org; oops' }), () => { connected = true; return fake(); }), /address 2 of 2/);
+  assert.strictEqual(connected, false);
 });
 test('no upcoming events', async () => {
   const health = await getHealth(fakeFetch(), CFG);
