@@ -412,5 +412,401 @@
     "description": "Conducted by Youth / Sunday School Seniors",
     "cancelled": false,
     "updated_at": "2026-11-18T12:35:30.179025+00:00"
+  },
+  {
+    "id": "31a060cc-567c-4177-a340-1b348f47fb4b",
+    "title": "Christmas Celebration",
+    "type": "Special event",
+    "date": "2026-12-05",
+    "time": "04:00 pm",
+    "campuses": [],
+    "note": "",
+    "combined_with": null,
+    "location": "Jesus is the Way Christian Church",
+    "location_address": "30 Commercial Pl, Keilor East VIC 3033",
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T08:59:37.739437+00:00"
+  },
+  {
+    "id": "6a921f6d-2131-481d-a0bf-935f12b64e62",
+    "title": "Fasting and Prayer",
+    "type": "Cancellation",
+    "date": "2026-12-05",
+    "time": "",
+    "campuses": [
+      "sunshine"
+    ],
+    "note": "Alternate arrangement will be notified in due course.",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "Alternate arrangement will be notified in due course.",
+    "cancelled": true,
+    "updated_at": "2026-11-23T09:32:58.69707+00:00"
+  },
+  {
+    "id": "ecb45778-1d4e-47fb-9425-38fa28bc6dbc",
+    "title": "Baptism Service",
+    "type": "Special event",
+    "date": "2026-12-06",
+    "time": "03:00 pm",
+    "campuses": [],
+    "note": "",
+    "combined_with": null,
+    "location": "Sunshine Leisure Centre",
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:51:25.931421+00:00"
+  },
+  {
+    "id": "0ccb95b3-3303-42de-8f05-f9d1087ecde9",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-06",
+    "time": "04:30 pm",
+    "campuses": [
+      "tarneit"
+    ],
+    "note": "Communion Service (Combined)",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "Communion Service (Combined)",
+    "cancelled": false,
+    "updated_at": "2026-11-23T08:51:22.752319+00:00"
+  },
+  {
+    "id": "b66a1f28-b007-4ffa-aede-cbe1f2ac4181",
+    "title": "Sunday  Service",
+    "type": "Sunday service",
+    "date": "2026-12-06",
+    "time": "05:00 pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "note": "Communion Service",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "Communion Service",
+    "cancelled": false,
+    "updated_at": "2026-11-23T08:52:56.526418+00:00"
+  },
+  {
+    "id": "83a11edf-34cb-4289-90b8-18d22256e4ac",
+    "title": "Sunday Service",
+    "type": "Cancellation",
+    "date": "2026-12-06",
+    "time": "",
+    "campuses": [
+      "melton",
+      "mernda",
+      "sunshine"
+    ],
+    "note": "",
+    "combined_with": "tarneit",
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": true,
+    "updated_at": "2026-11-23T08:54:46.550938+00:00"
+  },
+  {
+    "id": "489ebf24-b86a-4590-b610-56459f762ef1",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-13",
+    "time": "10:00 am",
+    "campuses": [
+      "mernda"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:09:23.115931+00:00"
+  },
+  {
+    "id": "92698c2e-e3da-40c0-8dfe-4143866329b0",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-13",
+    "time": "4:30pm",
+    "campuses": [
+      "tarneit"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:10:12.393096+00:00"
+  },
+  {
+    "id": "d651e748-0915-43b2-b0e8-7c170d34a490",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-13",
+    "time": "5pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:11:34.135975+00:00"
+  },
+  {
+    "id": "ebcbd789-9a30-4993-9b80-8c963a53db1f",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-13",
+    "time": "9:30am",
+    "campuses": [
+      "melton"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:08:41.072269+00:00"
+  },
+  {
+    "id": "0cfd11fb-4f74-4183-8a66-21a468d4c444",
+    "title": "Sunday Service",
+    "type": "Cancellation",
+    "date": "2026-12-13",
+    "time": "",
+    "campuses": [
+      "sunshine"
+    ],
+    "note": "",
+    "combined_with": "tarneit",
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": true,
+    "updated_at": "2026-11-23T09:12:48.178684+00:00"
+  },
+  {
+    "id": "a0df241d-3af1-472d-bf96-dc87d3c6e1f3",
+    "title": "Christmas Kids Party - VBS 2026",
+    "type": "Special event",
+    "date": "2026-12-19",
+    "time": "10:00 am to 12:30 pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "note": "Sign up at https://tcfmelbourne.org/vbs-2026",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "Sign up at https://tcfmelbourne.org/vbs-2026",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:06:25.975942+00:00"
+  },
+  {
+    "id": "6d215925-1e4d-4b3a-badf-63aa0e1f5b95",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-20",
+    "time": "10am",
+    "campuses": [
+      "mernda"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:43:46.257336+00:00"
+  },
+  {
+    "id": "3f2336fb-a9c6-4a95-bb70-dbb060fc4397",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-20",
+    "time": "4:30pm",
+    "campuses": [
+      "tarneit"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:44:09.089124+00:00"
+  },
+  {
+    "id": "d1bb18b9-7642-491d-9fac-78ffdc28f95d",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-20",
+    "time": "4pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:44:45.513844+00:00"
+  },
+  {
+    "id": "df9a7132-4798-4ca5-821a-4b927745ec0f",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-20",
+    "time": "5pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:45:53.151422+00:00"
+  },
+  {
+    "id": "3219db3f-a143-4510-a314-c0faaa7ea965",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-20",
+    "time": "9:30am",
+    "campuses": [
+      "melton"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:43:18.072164+00:00"
+  },
+  {
+    "id": "e9e199f0-cae0-40b4-8bb7-a0906104d0df",
+    "title": "Christmas Eve Service",
+    "type": "Special event",
+    "date": "2026-12-24",
+    "time": "10:00 pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:01:02.827539+00:00"
+  },
+  {
+    "id": "3043278f-214b-4465-b13c-e325c2f5c51c",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-27",
+    "time": "4pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "note": "Service of thanksgiving and praise",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "Service of thanksgiving and praise",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:35:52.347215+00:00"
+  },
+  {
+    "id": "f84fc17a-25d5-4f1b-b1b6-83a7d87eb6fd",
+    "title": "Sunday Service",
+    "type": "Sunday service",
+    "date": "2026-12-27",
+    "time": "5pm",
+    "campuses": [
+      "noble-park"
+    ],
+    "note": "Service of thanksgiving and praise",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "Service of thanksgiving and praise",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:37:35.95543+00:00"
+  },
+  {
+    "id": "42548b5a-b456-4e9c-a5af-8373cadb04d3",
+    "title": "Sunday Service",
+    "type": "Cancellation",
+    "date": "2026-12-27",
+    "time": "",
+    "campuses": [
+      "melton",
+      "mernda",
+      "tarneit"
+    ],
+    "note": "Service of thanksgiving and praise",
+    "combined_with": "sunshine",
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "Service of thanksgiving and praise",
+    "cancelled": true,
+    "updated_at": "2026-11-23T09:39:05.184075+00:00"
+  },
+  {
+    "id": "45956ac2-0790-4fbd-8045-53bc7a4f16fa",
+    "title": "New Year's Eve Service",
+    "type": "Special event",
+    "date": "2026-12-31",
+    "time": "10:00 pm",
+    "campuses": [
+      "sunshine"
+    ],
+    "note": "",
+    "combined_with": null,
+    "location": null,
+    "location_address": null,
+    "location_url": null,
+    "description": "",
+    "cancelled": false,
+    "updated_at": "2026-11-23T09:03:10.08255+00:00"
   }
 ]
