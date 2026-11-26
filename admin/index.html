@@ -128,9 +128,39 @@
     <section class="adm-panel" role="tabpanel" id="panel-events" aria-labelledby="tab-events" tabindex="0">
       <div class="adm-bar">
         <h2>Events</h2>
-        <button type="button" class="btn btn--gold" id="ev-add">Add event</button>
+        <div class="adm-actions">
+          <button type="button" class="btn btn--navy" id="bs-open">Add a month of Sundays</button>
+          <button type="button" class="btn btn--gold" id="ev-add">Add event</button>
+        </div>
       </div>
       <p class="adm-hint">Events show on the Events page, the home page and the campus pages straight away. Cancellations and service changes in the next 7 days also appear in the “This week” notice.</p>
+      <div class="adm-note" id="ev-coverage" hidden>
+        <span id="ev-coverage-text"></span>
+        <button type="button" class="adm-link" id="ev-coverage-btn" hidden></button>
+      </div>
+
+      <!-- ===== Add a month of Sundays (one row per Sunday and campus, prefilled with each campus's regular time) ===== -->
+      <form class="adm-card adm-form" id="bs-form" novalidate hidden aria-labelledby="bs-title">
+        <h3 id="bs-title">Add a month of Sundays</h3>
+        <p class="adm-hint">Adds a regular Sunday service for each campus you tick, using the time from the Service times tab. Change a time or add a note (e.g. a guest speaker) on any line, untick a line to leave it out, then save once. Sundays that are already added or cancelled are skipped.</p>
+        <div class="adm-grid">
+          <div class="fld">
+            <label for="bs-month">Month</label>
+            <select id="bs-month"></select>
+          </div>
+          <fieldset class="fld fld--wide">
+            <legend>Campuses</legend>
+            <div class="checks" id="bs-campuses"></div>
+          </fieldset>
+        </div>
+        <ul class="bs-list" id="bs-list"></ul>
+        <p class="adm-hint" id="bs-summary" role="status" aria-live="polite"></p>
+        <p class="form-error" id="bs-error" hidden></p>
+        <div class="adm-actions">
+          <button type="submit" class="btn btn--navy" id="bs-save">Add services</button>
+          <button type="button" class="btn btn--outline" id="bs-cancel">Cancel</button>
+        </div>
+      </form>
 
       <form class="adm-card adm-form" id="ev-form" novalidate hidden aria-labelledby="ev-form-title">
         <h3 id="ev-form-title">Add an event</h3>
@@ -202,6 +232,21 @@
               </div>
             </div>
           </fieldset>
+          <div class="fld" id="ev-repeat-wrap">
+            <label for="ev-repeat">Repeat <span class="adm-optional">(optional)</span></label>
+            <select id="ev-repeat" aria-describedby="ev-repeat-hint">
+              <option value="none" selected>Does not repeat</option>
+              <option value="week">Every week</option>
+              <option value="fortnight">Every 2 weeks</option>
+              <option value="month">Every month (same weekday)</option>
+            </select>
+            <p class="hint" id="ev-repeat-hint">Adds the same event on each date, e.g. every Saturday Fellowship Groups or the first Friday Prayer Meeting. You can edit or delete any one later.</p>
+          </div>
+          <div class="fld" id="ev-repeat-until-wrap" hidden>
+            <label for="ev-repeat-until">Repeat until</label>
+            <input id="ev-repeat-until" type="date">
+            <p class="hint" id="ev-repeat-count" role="status" aria-live="polite"></p>
+          </div>
           <div class="fld fld--wide">
             <label for="ev-note">Note (optional)</label>
             <textarea id="ev-note" rows="2" maxlength="500" aria-describedby="ev-note-hint"></textarea>
@@ -219,7 +264,19 @@
         </div>
       </form>
 
-      <h3 class="adm-sub">Upcoming</h3>
+      <div class="adm-bar">
+        <h3 class="adm-sub">Upcoming <span id="ev-upcoming-count"></span></h3>
+        <div class="fld adm-filter">
+          <label for="ev-filter">Show</label>
+          <select id="ev-filter"></select>
+        </div>
+      </div>
+      <div class="adm-bulkbar" id="ev-bulkbar" role="region" aria-label="Selected events" hidden>
+        <strong id="ev-bulk-count"></strong>
+        <button type="button" class="btn btn--navy btn--sm" id="ev-bulk-edit">Change time or note</button>
+        <button type="button" class="btn btn--sm adm-danger" id="ev-bulk-del">Delete</button>
+        <button type="button" class="adm-link adm-link--light" id="ev-bulk-clear">Clear selection</button>
+      </div>
       <ul class="adm-list" id="ev-upcoming"></ul>
 
       <details class="adm-more">

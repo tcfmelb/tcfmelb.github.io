@@ -63,6 +63,37 @@ Each event in the list shows **who last changed it and when**.
 > **Copy** on a past event to add it again on a new date: the form opens with the same details and an
 > empty **Date**, and the past event is left as it was.
 
+### Add a whole month of Sunday services at once
+
+The **Events** tab tells you when Sundays are running out (for example *"Sunday services are set up to
+Sun 27 Dec. January 2027 still needs adding."*) with a button to add that month.
+
+1. Tap **Add a month of Sundays** (or the **Add January 2027** button in the note above the list).
+2. Pick the **Month** and tick the **Campuses**. Every Sunday and campus gets its own line, already
+   filled in with that campus's regular Sunday time from the **Service times** tab.
+3. Change anything that is different: edit a **time**, type a **note** (e.g. *with Ps Name (Guest Speaker,
+   Country)*), or **untick** a line to leave it out. **Untick all** skips a whole Sunday.
+4. Check the summary under the list, tap **Add services**, and confirm. They're all added in one go.
+   Tap **Undo** in the message that appears if it's not what you meant.
+
+Sundays that are already added, or that have a cancellation, are skipped, so it's safe to run twice.
+For a cancellation or combined service, still use **Add event** with **Status: Cancelled** (section 4).
+
+### Repeat an event
+
+When adding a **new** event (for example *Fellowship Groups* every second Saturday, or the first Friday
+*Prayer Meeting*), choose **Repeat**: *Every week*, *Every 2 weeks* or *Every month (same weekday)*, then
+**Repeat until**. The form shows how many events it will add (up to 60 at once). You can still edit or
+delete any one of them afterwards, and the app warns you if it looks like you're adding something twice.
+
+### Change or delete several events at once
+
+In the **Upcoming** list, events are grouped by day. Tick the box beside each event (or **Select all**
+for a day), then use the bar that appears: **Change time or note** (an empty box keeps what each event
+has now) or **Delete**. Use **Show** at the top to look at one campus at a time. Deleting shows **Undo**.
+
+Times you type are tidied for you (*04:30 pm* is saved as *4:30pm*), and extra spaces in a title are removed.
+
 ---
 
 ## 4. Post a cancellation

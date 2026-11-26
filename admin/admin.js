@@ -10,7 +10,17 @@
   var BUCKET = 'gallery';
   var TYPES = ['Sunday service', 'Prayer', 'Meeting', 'Service change', 'Cancellation', 'Special event'];
   // The website's Title Case rule (main.js, loaded first with data-shared): "prayer meeting" → "Prayer Meeting"
-  function tc(s) { return window.tcfTitleCase ? window.tcfTitleCase(String(s == null ? '' : s).trim()) : String(s == null ? '' : s).trim(); }
+  function tc(s) {
+    var t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); // "Sunday  Service" → "Sunday Service"
+    return window.tcfTitleCase ? window.tcfTitleCase(t) : t;
+  }
+  // Tidy a typed time into the style the website uses: "04:30 pm" → "4:30pm", "10:00 am to 12:30 pm" → "10am to 12:30pm"
+  function normTime(s) {
+    return String(s == null ? '' : s).replace(/\s+/g, ' ').trim()
+      .replace(/\b0?(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m\b\.?/gi, function (m, h, mi, ap) {
+        return +h + (mi && mi !== '00' ? ':' + mi : '') + ap.toLowerCase() + 'm';
+      });
+  }
   var BADGE = { 'Prayer': ['badge--prayer', 'Prayer'], 'Meeting': ['badge--meeting', 'Meeting'], 'Service change': ['badge--change', 'Service Change'], 'Cancellation': ['badge--cancel', 'Cancelled'], 'Special event': ['badge--special', 'Special Event'], 'Combined service': ['badge--combined', 'Combined Service'] };
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -338,6 +348,15 @@
     box.innerHTML = opts.map(function (c) {
       return '<label class="check"><input type="checkbox" name="ev-campus" value="' + esc(c.slug) + '"> ' + esc(c.name) + '</label>';
     }).join('');
+    // The same campuses, for the “Add a month of Sundays” form (all ticked the first time) and the list filter
+    var keep = bulk.campuses || state.campuses.map(function (c) { return c.slug; });
+    $('bs-campuses').innerHTML = state.campuses.map(function (c) {
+      return '<label class="check"><input type="checkbox" name="bs-campus" value="' + esc(c.slug) + '"' + (keep.indexOf(c.slug) > -1 ? ' checked' : '') + '> ' + esc(c.name) + '</label>';
+    }).join('');
+    var f = $('ev-filter');
+    f.innerHTML = '<option value="">All campuses</option>' + state.campuses.map(function (c) {
+      return '<option value="' + esc(c.slug) + '"' + (c.slug === evFilter ? ' selected' : '') + '>' + esc(c.name) + '</option>';
+    }).join('');
   }
   function checkedCampuses() {
     return Array.prototype.slice.call(document.querySelectorAll('input[name=ev-campus]:checked')).map(function (i) { return i.value; });
@@ -361,7 +380,7 @@
     if (campuses.indexOf('all') > -1) campuses = ['all'];
     if (campuses.indexOf('none') > -1) campuses = []; // "Not at a campus": the location says where
     var status = $('ev-status').value;
-    var end = $('ev-time-end').value.trim(), start = $('ev-time').value.trim();
+    var end = normTime($('ev-time-end').value), start = normTime($('ev-time').value);
     var v = {
       title: tc($('ev-title').value),       // stored in Title Case
       type: status === 'cancelled' ? 'Cancellation' : $('ev-type').value,
@@ -533,6 +552,9 @@
     setCampuses(ev ? (ev.campuses && !ev.campuses.length ? ['none'] : ev.campuses) : []);
     renderCombinedOptions(ev && ev.combined_with ? ev.combined_with : '');
     syncStatus();
+    $('bs-form').hidden = true;
+    $('ev-repeat').value = 'none'; $('ev-repeat-until').value = ''; $('ev-repeat-until').removeAttribute('aria-invalid');
+    syncRepeat();
     showError($('ev-error'), '');
     f.querySelectorAll('[aria-invalid]').forEach(function (x) { x.removeAttribute('aria-invalid'); });
     f.hidden = false;
@@ -563,8 +585,307 @@
     return problems.length ? 'Please add ' + problems.join(', ').replace(/, ([^,]*)$/, ' and $1') + '.' : '';
   }
 
+  /* =====================================================================
+     BULK TOOLS: a month of Sundays, repeating events, changing several at once
+     ===================================================================== */
+  var selected = {};   // event id → true: the events ticked in the Upcoming list
+  var evFilter = '';   // campus slug shown in the Upcoming list ('' = all campuses)
+  var bulk = { month: '', picks: {}, edits: {}, campuses: null }; // the “Add a month of Sundays” form
+
+  function addDays(iso, n) { var d = isoParts(iso); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function shortDate(iso) { var d = isoParts(iso); return DAYS[d.getUTCDay()].slice(0, 3) + ' ' + d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()].slice(0, 3); }
+  function monthLabel(ym) { var p = ym.split('-'); return MONTHS[+p[1] - 1] + ' ' + p[0]; }
+  function nextSunday(iso) { while (!isSunday(iso)) iso = addDays(iso, 1); return iso; }
+  function sundaysIn(ym) {
+    var p = ym.split('-'), out = [], d = new Date(Date.UTC(+p[0], +p[1] - 1, 1));
+    while (d.getUTCMonth() === +p[1] - 1) { if (d.getUTCDay() === 0) out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 1); }
+    return out;
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many || one + 's'); }
+  function liveEvents() { return state.events.filter(function (e) { return !e.deleted_at; }); }
+
+  /* Is a campus's Sunday already dealt with? 'has' = a regular service row is there,
+     'cancelled' = a cancellation replaces it that day, '' = nothing yet. */
+  function sundayStatus(date, slug) {
+    var rows = liveEvents().filter(function (e) { return e.date === date && e.type !== 'Special event' && covers(e, slug); });
+    if (rows.some(function (e) { return replaces(e); })) return 'cancelled';
+    // Tolerates stray spaces (“Sunday  Service”) so an existing row is never offered for adding twice
+    if (rows.some(function (e) { return /^sunday\s+service$/i.test(String(e.title || '').trim()) && statusOf(e) !== 'cancelled'; })) return 'has';
+    return '';
+  }
+  /* Looks 40 Sundays ahead for the first one where some campus has nothing yet. */
+  function coverage() {
+    var d = nextSunday(melToday()), prev = null;
+    for (var i = 0; i < 40; i++, d = addDays(d, 7)) {
+      if (state.campuses.some(function (c) { return sundayStatus(d, c.slug) === ''; })) return { gap: d, prev: prev };
+      prev = d;
+    }
+    return { gap: null, prev: prev };
+  }
+  function renderCoverage() {
+    var box = $('ev-coverage'), txt = $('ev-coverage-text'), btn = $('ev-coverage-btn');
+    if (!state.campuses.length) { box.hidden = true; return; }
+    var c = coverage(), soon = !c.gap ? false : (isoParts(c.gap) - isoParts(melToday())) / 864e5 < 35;
+    box.hidden = false;
+    box.className = soon ? 'adm-note' : 'adm-hint';
+    if (!c.gap) { txt.textContent = 'Sunday services are set up for the next 40 weeks.'; btn.hidden = true; return; }
+    var ym = c.gap.slice(0, 7);
+    txt.textContent = (c.prev ? 'Sunday services are set up to ' + shortDate(c.prev) + '. ' : 'No upcoming Sunday services have been added yet. ') +
+      (soon ? monthLabel(ym) + ' still needs adding.' : '');
+    btn.hidden = false; btn.textContent = 'Add ' + monthLabel(ym); btn.setAttribute('data-ym', ym);
+  }
+
+  /* ---------- Add a month of Sundays ---------- */
+  function bulkCampuses() {
+    return Array.prototype.slice.call(document.querySelectorAll('input[name=bs-campus]:checked')).map(function (i) { return i.value; });
+  }
+  function bulkKey(date, slug) { return date + '|' + slug; }
+  function bulkRows() {
+    var rows = [], missing = [];
+    sundaysIn(bulk.month).forEach(function (date) {
+      bulk.campuses.forEach(function (slug) {
+        var key = bulkKey(date, slug);
+        if (sundayStatus(date, slug) !== '' || bulk.picks[key] === false) return;
+        var ed = bulk.edits[key] || {};
+        var time = normTime(ed.time != null ? ed.time : campusTime(slug));
+        if (!time) { missing.push(campusName(slug) + ' on ' + shortDate(date)); return; }
+        var r = { title: 'Sunday Service', type: 'Sunday service', date: date, time: time, campuses: [slug], note: String(ed.note || '').trim() || null };
+        if (state.hasCombined) r.combined_with = null;
+        if (state.hasLocation) { r.location = null; r.location_address = null; r.location_url = null; }
+        rows.push(r);
+      });
+    });
+    return { rows: rows, missing: missing };
+  }
+  function renderBulk() {
+    var dates = sundaysIn(bulk.month), html = '', skipped = 0;
+    if (!bulk.campuses.length) html = '<li class="adm-empty">Tick at least one campus.</li>';
+    (bulk.campuses.length ? dates : []).forEach(function (date) {
+      var rows = '', open = 0;
+      bulk.campuses.forEach(function (slug) {
+        var key = bulkKey(date, slug), st = sundayStatus(date, slug), name = campusName(slug), id = 'bs-' + date + '-' + slug;
+        var label = name + ' on ' + shortDate(date);
+        if (st) {
+          skipped++;
+          rows += '<li class="bs-row is-done"><span class="bs-who">' + esc(name) + '</span><span class="bs-status">' +
+            (st === 'cancelled' ? 'Cancelled that day, nothing to add' : 'Already added') + '</span></li>';
+          return;
+        }
+        open++;
+        var ed = bulk.edits[key] || {}, on = bulk.picks[key] !== false;
+        rows += '<li class="bs-row"><label class="check bs-who"><input type="checkbox" data-bs-pick="' + esc(key) + '"' + (on ? ' checked' : '') + '> ' + esc(name) +
+          '<span class="visually-hidden"> on ' + esc(shortDate(date)) + ': include</span></label>' +
+          '<input class="bs-time" id="' + id + '-t" data-bs-time="' + esc(key) + '" maxlength="40" value="' + esc(ed.time != null ? ed.time : campusTime(slug)) + '" aria-label="Time for ' + esc(label) + '" autocomplete="off">' +
+          '<input class="bs-note" id="' + id + '-n" data-bs-note="' + esc(key) + '" maxlength="500" value="' + esc(ed.note || '') + '" placeholder="Note (optional), e.g. with Ps Name (Guest Speaker, Country)" aria-label="Note for ' + esc(label) + '" autocomplete="off"></li>';
+      });
+      html += '<li class="bs-day"><div class="bs-day__head"><h4>' + esc(longDate(date)) + '</h4>' +
+        (open ? '<span><button type="button" class="adm-link" data-bs-all="' + date + '" data-on="1">Tick all<span class="visually-hidden"> on ' + esc(shortDate(date)) + '</span></button>' +
+          '<button type="button" class="adm-link" data-bs-all="' + date + '" data-on="0">Untick all<span class="visually-hidden"> on ' + esc(shortDate(date)) + '</span></button></span>' : '') +
+        '</div><ul class="bs-rows">' + rows + '</ul></li>';
+    });
+    $('bs-list').innerHTML = html;
+    updateBulkSummary(skipped);
+  }
+  function updateBulkSummary(skipped) {
+    var n = bulkRows().rows.length, btn = $('bs-save');
+    btn.textContent = n ? 'Add ' + plural(n, 'service') : 'Nothing to add';
+    btn.disabled = !n;
+    var skip = skipped != null ? skipped : $('bs-list').querySelectorAll('.is-done').length;
+    $('bs-summary').textContent = n ? plural(n, 'service') + ' will be added for ' + monthLabel(bulk.month) + (skip ? ' (' + skip + ' already there or cancelled, skipped)' : '') + '.' : 'Every Sunday here is already added, cancelled or unticked.';
+  }
+  function openBulk(ym) {
+    var c = coverage(), months = [], d = melToday().slice(0, 7);
+    for (var i = 0; i < 8; i++) {
+      months.push(d);
+      var p = d.split('-'), y = +p[0], m = +p[1];
+      d = m === 12 ? (y + 1) + '-01' : y + '-' + ('0' + (m + 1)).slice(-2);
+    }
+    bulk.month = months.indexOf(ym) > -1 ? ym : months.indexOf((c.gap || '').slice(0, 7)) > -1 ? c.gap.slice(0, 7) : months[1];
+    bulk.picks = {}; bulk.edits = {};
+    $('bs-month').innerHTML = months.map(function (m) { return '<option value="' + m + '"' + (m === bulk.month ? ' selected' : '') + '>' + esc(monthLabel(m)) + '</option>'; }).join('');
+    bulk.campuses = bulkCampuses().length ? bulkCampuses() : state.campuses.map(function (x) { return x.slug; });
+    $('ev-form').hidden = true; editing = null;
+    showError($('bs-error'), '');
+    $('bs-form').hidden = false;
+    renderCampusChecks();
+    renderBulk();
+    $('bs-form').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    $('bs-month').focus({ preventScroll: true });
+  }
+  function closeBulk() { $('bs-form').hidden = true; $('bs-open').focus(); }
+  function saveBulk() {
+    var r = bulkRows(), err = $('bs-error'), btn = $('bs-save');
+    showError(err, '');
+    if (r.missing.length) { showError(err, 'Please add a time for ' + andList(r.missing.slice(0, 3)) + (r.missing.length > 3 ? ' and ' + (r.missing.length - 3) + ' more' : '') + ', or untick it.'); return; }
+    if (!r.rows.length) return;
+    var byDate = {};
+    r.rows.forEach(function (x) { (byDate[x.date] = byDate[x.date] || []).push(campusName(x.campuses[0]) + ' ' + x.time + (x.note ? ' (' + x.note + ')' : '')); });
+    confirmBox({
+      title: 'Add ' + plural(r.rows.length, 'Sunday service') + '?',
+      html: '<p>These go on the website straight away:</p><ul class="adm-changes">' + Object.keys(byDate).sort().map(function (d) {
+        return '<li><strong>' + esc(shortDate(d)) + ':</strong> ' + esc(byDate[d].join(', ')) + '</li>';
+      }).join('') + '</ul><p class="adm-hint">You can delete any of them afterwards, and “Undo” appears after saving.</p>',
+      ok: 'Add services'
+    }).then(function (yes) {
+      if (!yes) return;
+      busy(btn, true);
+      sb.from('events').insert(r.rows).select().then(function (res) {
+        busy(btn, false);
+        var rows = mustChange(res);
+        state.events = state.events.concat(rows);
+        $('bs-form').hidden = true;
+        renderEvents();
+        var ids = rows.map(function (x) { return x.id; });
+        toast(plural(rows.length, 'Sunday service') + ' added. They are on the website now.', function () {
+          setDeletedMany(ids, true).then(function () { toast('Those ' + rows.length + ' services were removed.'); }).catch(function (x) { report(null, x); });
+        });
+        $('bs-open').focus();
+      }).catch(function (x) { busy(btn, false); report(err, x); });
+    });
+  }
+  function initBulk() {
+    $('bs-open').addEventListener('click', function () { openBulk(); });
+    $('ev-coverage-btn').addEventListener('click', function () { openBulk(this.getAttribute('data-ym')); });
+    $('bs-cancel').addEventListener('click', closeBulk);
+    $('bs-month').addEventListener('change', function () { bulk.month = this.value; bulk.picks = {}; bulk.edits = {}; renderBulk(); });
+    $('bs-campuses').addEventListener('change', function () { bulk.campuses = bulkCampuses(); renderBulk(); });
+    var list = $('bs-list');
+    list.addEventListener('input', function (e) {
+      var t = e.target, k;
+      if ((k = t.getAttribute('data-bs-time')) != null) (bulk.edits[k] = bulk.edits[k] || {}).time = t.value;
+      else if ((k = t.getAttribute('data-bs-note')) != null) (bulk.edits[k] = bulk.edits[k] || {}).note = t.value;
+      else return;
+      updateBulkSummary();
+    });
+    list.addEventListener('change', function (e) {
+      var k = e.target.getAttribute('data-bs-pick');
+      if (k == null) return;
+      bulk.picks[k] = e.target.checked;
+      updateBulkSummary();
+    });
+    list.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-bs-all]');
+      if (!b) return;
+      var on = b.getAttribute('data-on') === '1', date = b.getAttribute('data-bs-all');
+      bulk.campuses.forEach(function (slug) { if (!sundayStatus(date, slug)) bulk.picks[bulkKey(date, slug)] = on; });
+      renderBulk();
+      var again = document.querySelector('button[data-bs-all="' + date + '"][data-on="' + (on ? 1 : 0) + '"]');
+      if (again) again.focus();
+    });
+    $('bs-form').addEventListener('submit', function (e) { e.preventDefault(); saveBulk(); });
+  }
+
+  /* ---------- Repeating an event ---------- */
+  function repeatDates(start, mode, until) {
+    var out = [start], d = start, y, m, sd, nth, wd;
+    if (mode === 'month') {
+      sd = isoParts(start); nth = Math.ceil(sd.getUTCDate() / 7); wd = sd.getUTCDay(); y = sd.getUTCFullYear(); m = sd.getUTCMonth();
+      while (out.length < 60) {
+        m++; if (m > 11) { m = 0; y++; }
+        var off = (wd - new Date(Date.UTC(y, m, 1)).getUTCDay() + 7) % 7, day = 1 + off + (nth - 1) * 7;
+        if (day > new Date(Date.UTC(y, m + 1, 0)).getUTCDate()) day -= 7; // no 5th weekday this month: use the last one
+        var iso = new Date(Date.UTC(y, m, day)).toISOString().slice(0, 10);
+        if (iso > until) break;
+        out.push(iso);
+      }
+    } else {
+      var step = mode === 'fortnight' ? 14 : 7;
+      while (out.length < 60) { d = addDays(d, step); if (d > until) break; out.push(d); }
+    }
+    return out;
+  }
+  function syncRepeat() {
+    var mode = $('ev-repeat').value, wrap = $('ev-repeat-until-wrap');
+    var ok = !editing && $('ev-status').value === 'normal';
+    $('ev-repeat-wrap').hidden = !ok;
+    wrap.hidden = !ok || mode === 'none';
+    var info = $('ev-repeat-count'), start = $('ev-date').value, until = $('ev-repeat-until').value;
+    info.textContent = '';
+    if (!wrap.hidden && /^\d{4}-\d{2}-\d{2}$/.test(start) && /^\d{4}-\d{2}-\d{2}$/.test(until) && until > start) {
+      var n = repeatDates(start, mode, until).length;
+      info.textContent = n + ' events, ' + shortDate(start) + ' to ' + shortDate(repeatDates(start, mode, until)[n - 1]) + (n >= 60 ? ' (the most that can be added at once)' : '') + '.';
+    }
+  }
+  // Is there already a live event the same day, with the same title, at an overlapping campus?
+  function isDuplicate(v) {
+    var a = campusesOf(v), title = String(v.title).trim().toLowerCase();
+    return others(v).some(function (o) {
+      var b = campusesOf(o);
+      return String(o.title).trim().toLowerCase() === title && (a.indexOf('all') > -1 || b.indexOf('all') > -1 || a.some(function (x) { return b.indexOf(x) > -1; }));
+    });
+  }
+
+  /* ---------- Several events at once: tick them in the Upcoming list ---------- */
+  function selectedEvents() { return state.events.filter(function (e) { return selected[e.id] && !e.deleted_at; }); }
+  function renderBulkBar() {
+    var list = selectedEvents(), bar = $('ev-bulkbar');
+    bar.hidden = !list.length;
+    $('ev-bulk-count').textContent = plural(list.length, 'event') + ' selected';
+  }
+  function setDeletedMany(ids, on) {
+    return sb.from('events').update({ deleted_at: on ? new Date().toISOString() : null }).in('id', ids).select().then(function (res) {
+      var rows = mustChange(res);
+      rows.forEach(function (row) { var i = state.events.findIndex(function (x) { return x.id === row.id; }); if (i > -1) state.events[i] = row; });
+      renderEvents();
+      return rows;
+    });
+  }
+  function mergeRows(rows) {
+    rows.forEach(function (row) { var i = state.events.findIndex(function (x) { return x.id === row.id; }); if (i > -1) state.events[i] = row; });
+  }
+  function bulkDelete() {
+    var list = selectedEvents();
+    if (!list.length) return;
+    confirmBox({
+      title: 'Delete ' + plural(list.length, 'event') + '?',
+      html: '<p>These will be removed from the website:</p><ul class="adm-changes">' + list.slice(0, 12).map(function (e) {
+        return '<li><strong>' + esc(tc(e.title)) + '</strong>, ' + esc(shortDate(e.date)) + ' (' + esc(whereText(e)) + ')</li>';
+      }).join('') + (list.length > 12 ? '<li>and ' + (list.length - 12) + ' more</li>' : '') + '</ul><p>You can put them back from “Recently deleted”.</p>',
+      ok: 'Delete ' + plural(list.length, 'event'), danger: true
+    }).then(function (yes) {
+      if (!yes) return;
+      var ids = list.map(function (e) { return e.id; });
+      setDeletedMany(ids, true).then(function () {
+        selected = {}; renderEvents();
+        toast(plural(ids.length, 'event') + ' deleted.', function () {
+          setDeletedMany(ids, false).then(function () { toast('Events restored. They are back on the website.'); }).catch(function (x) { report(null, x); });
+        });
+      }).catch(function (x) { report(null, x); });
+    });
+  }
+  function bulkEdit() {
+    var list = selectedEvents();
+    if (!list.length) return;
+    var cancelled = list.filter(function (e) { return statusOf(e) === 'cancelled'; }).length;
+    confirmBox({
+      title: 'Change ' + plural(list.length, 'event') + '?',
+      html: '<p>Fill in only what you want to change. A box left empty keeps what each event has now.</p>' +
+        '<div class="fld"><label for="bk-time">New time</label><input id="bk-time" maxlength="40" autocomplete="off"><p class="hint">e.g. 4pm, or 4pm to 6pm.' +
+        (cancelled ? ' ' + plural(cancelled, 'cancelled event') + ' (no time) will keep ' + (cancelled === 1 ? 'its' : 'their') + ' empty time.' : '') + '</p></div>' +
+        '<div class="fld"><label for="bk-note">New note</label><input id="bk-note" maxlength="500" autocomplete="off"></div>' +
+        '<label class="check"><input type="checkbox" id="bk-clear"> Clear the note instead</label>',
+      ok: 'Save changes'
+    }).then(function (yes) {
+      if (!yes) return;
+      var time = normTime($('bk-time').value), note = $('bk-note').value.trim(), clear = $('bk-clear').checked;
+      if (!time && !note && !clear) { toast('Nothing was changed.'); return; }
+      var all = list.map(function (e) { return e.id; });
+      var timed = list.filter(function (e) { return statusOf(e) === 'normal'; }).map(function (e) { return e.id; });
+      var steps = [];
+      if (time && timed.length) steps.push(sb.from('events').update({ time: time }).in('id', timed).select());
+      if (note || clear) steps.push(sb.from('events').update({ note: clear ? null : note }).in('id', all).select());
+      if (!steps.length) { toast('Nothing was changed.'); return; }
+      Promise.all(steps).then(function (rs) {
+        rs.forEach(function (res) { mergeRows(mustChange(res)); });
+        selected = {}; renderEvents();
+        toast(plural(list.length, 'event') + ' updated. The website shows the changes now.');
+      }).catch(function (x) { report(null, x); });
+    });
+  }
+
   function initEvents() {
-    $('ev-add').addEventListener('click', function () { openForm(null); });
+    initBulk();
+    $('ev-add').addEventListener('click', function () { $('bs-form').hidden = true; openForm(null); });
     $('ev-cancel').addEventListener('click', closeForm);
     $('ev-campuses').addEventListener('change', function (e) {
       var t = e.target;
@@ -580,40 +901,97 @@
       if ($('ev-type').value === 'Special event' && !checkedCampuses().length) setCampuses(['none']);
     });
     ['ev-time-end', 'ev-loc-name', 'ev-loc-address', 'ev-loc-url'].forEach(function (id) { $(id).addEventListener('input', updatePreview); });
-    ['ev-type', 'ev-date'].forEach(function (id) { $(id).addEventListener('change', function () { autoFill(); updatePreview(); }); });
+    ['ev-type', 'ev-date'].forEach(function (id) { $(id).addEventListener('change', function () { autoFill(); updatePreview(); syncRepeat(); }); });
     $('ev-campuses').addEventListener('change', function () { renderCombinedOptions(); autoFill(); updatePreview(); });
-    $('ev-status').addEventListener('change', function () { syncStatus(); renderCombinedOptions(); autoFill(); updatePreview(); });
+    $('ev-status').addEventListener('change', function () { syncStatus(); renderCombinedOptions(); autoFill(); updatePreview(); syncRepeat(); });
     $('ev-combined').addEventListener('change', updatePreview);
+    ['ev-repeat', 'ev-repeat-until'].forEach(function (id) { $(id).addEventListener('change', syncRepeat); });
+
+    // Upcoming list: filter by campus, tick several events
+    $('ev-filter').addEventListener('change', function () { evFilter = this.value; renderEvents(); });
+    $('ev-upcoming').addEventListener('change', function (e) {
+      var t = e.target, id = t.getAttribute('data-sel'), day = t.getAttribute('data-seldate');
+      if (id) { if (t.checked) selected[id] = true; else delete selected[id]; }
+      else if (day) {
+        document.querySelectorAll('input[data-sel][data-date="' + day + '"]').forEach(function (i) {
+          i.checked = t.checked;
+          if (t.checked) selected[i.getAttribute('data-sel')] = true; else delete selected[i.getAttribute('data-sel')];
+        });
+      } else return;
+      renderBulkBar();
+    });
+    $('ev-bulk-del').addEventListener('click', bulkDelete);
+    $('ev-bulk-edit').addEventListener('click', bulkEdit);
+    $('ev-bulk-clear').addEventListener('click', function () { selected = {}; renderEvents(); $('ev-filter').focus(); });
 
     $('ev-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var v = formValues(), err = $('ev-error'), btn = $('ev-save');
       var problem = validate(v);
+      // Repeating (new events only): the dates to add, from the first date up to “Repeat until”
+      var mode = editing ? 'none' : $('ev-repeat').value, dates = [v.date];
+      if (!problem && mode !== 'none' && !$('ev-repeat-wrap').hidden) {
+        var until = $('ev-repeat-until').value;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(until) || until <= v.date) {
+          problem = 'Please choose a “Repeat until” date after the first date.';
+          $('ev-repeat-until').setAttribute('aria-invalid', 'true');
+        } else dates = repeatDates(v.date, mode, until);
+      }
       showError(err, problem);
       if (problem) { var bad = $('ev-form').querySelector('[aria-invalid]') || document.querySelector('input[name=ev-campus]'); if (bad) bad.focus(); return; }
-      var ask = Promise.resolve(true);
-      if (v.type === 'Cancellation') {
-        ask = confirmBox({
+      var rows = dates.map(function (d) { return Object.assign({}, v, { date: d }); });
+
+      // Questions to answer before saving, in order. Any “no” stops the save.
+      var asks = [];
+      if (!editing) {
+        var dupes = rows.filter(isDuplicate);
+        if (dupes.length) asks.push(function () {
+          return confirmBox({
+            title: 'This may already be added',
+            html: '<p>There is already <strong>' + esc(v.title) + '</strong> at the same campus on ' + (dupes.length === 1 ? '<strong>' + esc(longDate(dupes[0].date)) + '</strong>' : plural(dupes.length, 'of these dates')) + '. Add it again anyway?</p>',
+            ok: 'Add anyway', danger: true
+          });
+        });
+      }
+      if (v.type === 'Cancellation') asks.push(function () {
+        return confirmBox({
           title: 'Post this cancellation?',
           html: '<p><strong>' + esc(v.title) + '</strong> at <strong>' + esc(campusNames(v.campuses)) + '</strong> on <strong>' + esc(longDate(v.date)) + '</strong>' +
             ' will be shown as <strong>Cancelled</strong>' + (v.combined_with ? ', combined with <strong>' + esc(campusName(v.combined_with)) + '</strong>,' : '') + ' on the website straight away.</p>' +
             '<p class="adm-hint">This is how it will look:</p><div class="adm-preview adm-preview--plain">' + previewHTML(v) + '</div>',
           ok: 'Yes, post cancellation', danger: true
         });
-      }
+      });
+      if (rows.length > 1) asks.push(function () {
+        return confirmBox({
+          title: 'Add ' + plural(rows.length, 'event') + '?',
+          html: '<p><strong>' + esc(v.title) + '</strong> (' + esc(whereText(v)) + (v.time ? ', ' + esc(v.time) : '') + ') on:</p><p>' + esc(rows.map(function (r) { return shortDate(r.date); }).join(', ')) + '</p>' +
+            '<p class="adm-hint">You can edit or delete any one of them afterwards.</p>',
+          ok: 'Add ' + plural(rows.length, 'event')
+        });
+      });
+      var ask = asks.reduce(function (p, fn) { return p.then(function (ok) { return ok ? fn() : false; }); }, Promise.resolve(true));
+
       ask.then(function (yes) {
         if (!yes) return;
         busy(btn, true);
-        var q = editing ? sb.from('events').update(v).eq('id', editing).select() : sb.from('events').insert(v).select();
+        var q = editing ? sb.from('events').update(v).eq('id', editing).select() : sb.from('events').insert(rows).select();
         return q.then(function (res) {
           busy(btn, false);
-          var row = mustChange(res)[0];
-          var i = state.events.findIndex(function (x) { return x.id === row.id; });
-          if (i > -1) state.events[i] = row; else state.events.push(row);
-          var wasNew = !editing;
+          var saved = mustChange(res);
+          saved.forEach(function (row) {
+            var i = state.events.findIndex(function (x) { return x.id === row.id; });
+            if (i > -1) state.events[i] = row; else state.events.push(row);
+          });
+          var wasNew = !editing, row = saved[0];
           $('ev-form').hidden = true; editing = null;
           renderEvents();
-          toast(wasNew ? 'Event added. It is on the website now.' : 'Event saved. The website shows the change now.');
+          if (saved.length > 1) {
+            var ids = saved.map(function (x) { return x.id; });
+            toast(plural(saved.length, 'event') + ' added. They are on the website now.', function () {
+              setDeletedMany(ids, true).then(function () { toast('Those ' + saved.length + ' events were removed.'); }).catch(function (x) { report(null, x); });
+            });
+          } else toast(wasNew ? 'Event added. It is on the website now.' : 'Event saved. The website shows the change now.');
           var b = document.querySelector('[data-edit="' + row.id + '"]');
           (b || $('ev-add')).focus();
         }).catch(function (x) { busy(btn, false); report(err, x); });
@@ -680,9 +1058,12 @@
         '<button type="button" class="btn btn--outline btn--sm" data-edit="' + ev.id + '">Edit<span class="visually-hidden"> ' + label + '</span></button>' +
         '<button type="button" class="btn btn--sm adm-danger" data-del="' + ev.id + '">Delete<span class="visually-hidden"> ' + label + '</span></button>';
     var st = statusOf(ev);
-    var meta = [longDate(ev.date), replaces(ev) ? 'no service' : ev.time, whereText(ev), isCombined(ev) ? 'combined with ' + campusName(ev.combined_with) : ''].filter(Boolean).map(esc).join(' · ');
+    // In the grouped Upcoming list the day heading already shows the date
+    var meta = [mode === 'up' ? '' : longDate(ev.date), replaces(ev) ? 'no service' : ev.time, whereText(ev), isCombined(ev) ? 'combined with ' + campusName(ev.combined_with) : ''].filter(Boolean).map(esc).join(' · ');
     var del = mode === 'deleted' && ev.deleted_at ? ' · deleted ' + esc(stampFmt.format(new Date(ev.deleted_at))) : '';
-    return '<li class="adm-item' + (st === 'cancelled' ? ' is-cancel' : '') + '"><div class="adm-item__main">' +
+    var pick = mode === 'up'
+      ? '<label class="adm-item__pick"><input type="checkbox" data-sel="' + ev.id + '" data-date="' + esc(ev.date) + '"' + (selected[ev.id] ? ' checked' : '') + '><span class="visually-hidden">Select ' + label + '</span></label>' : '';
+    return '<li class="adm-item' + (st === 'cancelled' ? ' is-cancel' : '') + (pick ? ' has-pick' : '') + '">' + pick + '<div class="adm-item__main">' +
       '<p class="adm-item__title">' + badge(badgeKey(ev)) + ' ' + esc(tc(ev.title)) + '</p>' +
       '<p class="adm-item__meta">' + meta + '</p>' +
       (ev.note ? '<p class="adm-item__note">' + esc(ev.note) + '</p>' : '') +
@@ -690,13 +1071,34 @@
       '<p class="adm-item__stamp">' + esc(stamp(ev)) + del + '</p>' +
       '</div><div class="adm-item__actions">' + actions + '</div></li>';
   }
+  // The Upcoming list: one heading per day (with “select all”), the events of that day under it
+  function upcomingHTML(list) {
+    var html = '', day = null;
+    list.forEach(function (e) {
+      if (e.date !== day) {
+        day = e.date;
+        var same = list.filter(function (x) { return x.date === day; });
+        var all = same.every(function (x) { return selected[x.id]; });
+        html += '<li class="adm-day"><h4>' + esc(longDate(day)) + '</h4><label class="check adm-day__all"><input type="checkbox" data-seldate="' + esc(day) + '"' + (all ? ' checked' : '') + '> Select all<span class="visually-hidden"> on ' + esc(longDate(day)) + '</span></label></li>';
+      }
+      html += eventItem(e, 'up');
+    });
+    return html;
+  }
   function renderEvents() {
     var today = melToday();
     var live = state.events.filter(function (e) { return !e.deleted_at; });
     var up = live.filter(function (e) { return e.date >= today; }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
     var past = live.filter(function (e) { return e.date < today; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
     var gone = state.events.filter(function (e) { return e.deleted_at; }).sort(function (a, b) { return a.deleted_at < b.deleted_at ? 1 : -1; });
-    $('ev-upcoming').innerHTML = up.length ? up.map(function (e) { return eventItem(e, 'up'); }).join('') : '<li class="adm-empty">No upcoming events. Use “Add event” to add one.</li>';
+    // Special events are shown for every campus on the website, so they stay in whatever campus is picked
+    var shown = evFilter ? up.filter(function (e) { return e.type === 'Special event' || covers(e, evFilter); }) : up;
+    var ids = {}; up.forEach(function (e) { ids[e.id] = true; });
+    Object.keys(selected).forEach(function (id) { if (!ids[id]) delete selected[id]; });
+    $('ev-upcoming').innerHTML = shown.length ? upcomingHTML(shown) : '<li class="adm-empty">' + (up.length ? 'Nothing upcoming for ' + esc(campusName(evFilter)) + '.' : 'No upcoming events. Use “Add event” to add one.') + '</li>';
+    $('ev-upcoming-count').textContent = '(' + (shown.length === up.length ? up.length : shown.length + ' of ' + up.length) + ')';
+    renderBulkBar();
+    renderCoverage();
     $('ev-past').innerHTML = past.length ? past.map(function (e) { return eventItem(e, 'past'); }).join('') : '<li class="adm-empty">No past events.</li>';
     $('ev-deleted').innerHTML = gone.length ? gone.map(function (e) { return eventItem(e, 'deleted'); }).join('') : '<li class="adm-empty">Nothing has been deleted.</li>';
     $('ev-past-count').textContent = '(' + past.length + ')';
