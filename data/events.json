@@ -418,7 +418,7 @@
     "title": "Christmas Celebration",
     "type": "Special event",
     "date": "2026-12-05",
-    "time": "04:00 pm",
+    "time": "4pm",
     "campuses": [],
     "note": "",
     "combined_with": null,
@@ -427,7 +427,7 @@
     "location_url": null,
     "description": "",
     "cancelled": false,
-    "updated_at": "2026-11-23T08:59:37.739437+00:00"
+    "updated_at": "2026-11-26T03:41:11.714978+00:00"
   },
   {
     "id": "6a921f6d-2131-481d-a0bf-935f12b64e62",
@@ -452,7 +452,7 @@
     "title": "Baptism Service",
     "type": "Special event",
     "date": "2026-12-06",
-    "time": "03:00 pm",
+    "time": "3pm",
     "campuses": [],
     "note": "",
     "combined_with": null,
@@ -461,14 +461,14 @@
     "location_url": null,
     "description": "",
     "cancelled": false,
-    "updated_at": "2026-11-23T09:51:25.931421+00:00"
+    "updated_at": "2026-11-26T03:41:00.690185+00:00"
   },
   {
     "id": "0ccb95b3-3303-42de-8f05-f9d1087ecde9",
     "title": "Sunday Service",
     "type": "Sunday service",
     "date": "2026-12-06",
-    "time": "04:30 pm",
+    "time": "4:30pm",
     "campuses": [
       "tarneit"
     ],
@@ -479,14 +479,14 @@
     "location_url": null,
     "description": "Communion Service (Combined)",
     "cancelled": false,
-    "updated_at": "2026-11-23T08:51:22.752319+00:00"
+    "updated_at": "2026-11-26T03:40:43.645195+00:00"
   },
   {
     "id": "b66a1f28-b007-4ffa-aede-cbe1f2ac4181",
-    "title": "Sunday  Service",
+    "title": "Sunday Service",
     "type": "Sunday service",
     "date": "2026-12-06",
-    "time": "05:00 pm",
+    "time": "5pm",
     "campuses": [
       "noble-park"
     ],
@@ -497,7 +497,7 @@
     "location_url": null,
     "description": "Communion Service",
     "cancelled": false,
-    "updated_at": "2026-11-23T08:52:56.526418+00:00"
+    "updated_at": "2026-11-26T03:40:54.349982+00:00"
   },
   {
     "id": "83a11edf-34cb-4289-90b8-18d22256e4ac",
